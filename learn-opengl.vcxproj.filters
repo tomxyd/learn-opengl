@@ -46,8 +46,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="4.2.texture.vs" />
-    <None Include="4.2.texture.fss" />
+    <None Include="texture.vs" />
+    <None Include="texture.fss" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="container.jpg">
