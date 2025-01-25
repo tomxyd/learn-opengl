@@ -179,6 +179,18 @@ int main()
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+		//second transformation
+        transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        float scale = static_cast<float>(sin(glfwGetTime()));
+        transform = glm::translate(transform, glm::vec3(-0.5f, 0.5f, 0.0f));
+        transform = glm::scale(transform, glm::vec3(scale));
+        // get matrix's uniform location and set matrix
+        ourShader.use();
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, &transform[0][0]);
+        glBindVertexArray(VAO);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
