@@ -28,7 +28,7 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
 // lighting
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+glm::vec3 lightPos(0.3f, -0.1f, 2.0f);
 int main()
 {
     // glfw: initialize and configure
@@ -153,12 +153,6 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // set light position
-        float lightX = 2.0f * sin(glfwGetTime());
-        float lightY = -0.3f;
-        float lightZ = 1.5f * cos(glfwGetTime());
-        lightPos = glm::vec3(lightX, lightY, lightZ);
-
         // input
         // -----
         processInput(window);
@@ -172,8 +166,17 @@ int main()
         ourShader.use();
         ourShader.setVec3("objectColor", 0.5f, 1.0f, 1.0f);
         ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        ourShader.setVec3("lightPos", lightPos);
+        ourShader.setVec3("light.position", lightPos);
 		ourShader.setVec3("viewPos", camera.Position);
+
+        //cyan-plastic material
+		ourShader.setVec3("material.ambient", 0.0f, 0.1f, 0.06f);
+		ourShader.setVec3("material.diffuse", 0.0f, 0.50980392f, 0.50980392f);
+		ourShader.setVec3("material.specular", 0.50196078f, 0.50196078f, 0.50196078f);
+		ourShader.setFloat("material.shininess", 32.0f);
+		ourShader.setVec3("light.ambient", 1.0f, 1.0f, 1.0f);
+		ourShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
+		ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -188,7 +191,6 @@ int main()
         // render the cube
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-
 
         // also draw the lamp object
         lightCubeShader.use();
