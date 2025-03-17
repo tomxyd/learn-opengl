@@ -14,6 +14,7 @@
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+unsigned int load_image(const char* path);
 void processInput(GLFWwindow* window);
 
 // settings
@@ -28,7 +29,7 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 
 // lighting
-glm::vec3 lightPos(0.3f, -0.1f, 2.0f);
+glm::vec3 lightPos(0.3f, 0.4f, 2.0f);
 int main()
 {
     // glfw: initialize and configure
@@ -70,10 +71,7 @@ int main()
     Shader ourShader("texture.vs", "texture.fss");
 	Shader lightCubeShader("light_cube.vs", "light_cube.fss");
 
-    //Load image data
-    // -------------------------------------------
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load("container2.png", &width, &height, &nrChannels, 0);
+
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -132,26 +130,11 @@ int main()
 
     glBindVertexArray(cubeVAO);
 
-    //create ID for texture
-    unsigned int diffuseMap;
-	glGenTextures(1, &diffuseMap);
+    //load 
+    unsigned int diffuseMap = load_image("container2.png");
+    unsigned int specularMap = load_image("container2_specular.png");
+	unsigned int emissionMap = load_image("matrix.jpg");
 
-	glBindTexture(GL_TEXTURE_2D, diffuseMap);
-    if (data)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-		std::cout << "Failed to load texture" << std::endl;
-    }
-
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
@@ -175,8 +158,10 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 
-    //free image memory
-	stbi_image_free(data);
+	ourShader.use();
+    ourShader.setInt("material.diffuse", 0);
+    ourShader.setInt("material.specular", 1);
+	ourShader.setInt("material.emission", 2);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -196,19 +181,20 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // be sure to activate shader when setting uniforms/drawing objects
-        ourShader.use();
+
+        // be sure to activate shader when setting uniforms/drawing 
+		ourShader.use();
         ourShader.setVec3("light.position", lightPos);
 		ourShader.setVec3("viewPos", camera.Position);
 
 		//light properties
         ourShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-        ourShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+        ourShader.setVec3("light.diffuse", 0.3f, 0.3f, 0.3f);
         ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
 
         //cyan-plastic material
-		ourShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+
 		ourShader.setFloat("material.shininess", 32.0f);
 
         // view/projection transformations
@@ -221,8 +207,13 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         ourShader.setMat4("model", model);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        //bind texture maps
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularMap);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, emissionMap);
 
         // render the cube
         glBindVertexArray(cubeVAO);
@@ -314,4 +305,49 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+unsigned int load_image(const char* path)
+{
+    unsigned int id;
+	glGenTextures(1, &id);
+
+	glBindTexture(GL_TEXTURE_2D, id);
+
+    //Load image data
+    // -------------------------------------------
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(path, &width, &height, &nrChannels, 0);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLenum format;
+	if (nrChannels == 1)
+	{
+		format = GL_RED;
+	}
+	else if (nrChannels == 3)
+	{
+		format = GL_RGB;
+	}
+	else if (nrChannels == 4)
+	{
+		format = GL_RGBA;
+    }
+    else {
+        format = GL_RGBA;
+    }
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    return id;
 }
