@@ -10,9 +10,15 @@ add_subdirectory(thirdparty/glad)
 add_subdirectory(thirdparty/glm)
 add_subdirectory(thirdparty/stb_image)
 add_subdirectory(thirdparty/imgui-docking)	
+add_subdirectory(thirdparty/assimp)	
+
+# MY_SOURCES is defined to be a list of all the source files for my game 
+# DON'T ADD THE SOURCES BY HAND, they are already added with this macro
+file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 
-add_executable(Engine main.cpp)
+add_executable("${CMAKE_PROJECT_NAME}")
+
 
 target_compile_definitions("${CMAKE_PROJECT_NAME}" PUBLIC GLFW_INCLUDE_NONE=1) 
 
@@ -32,7 +38,7 @@ else()
 
 endif()
 
-
+target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES}  "includes/Mesh.h" "includes/Model.h" "src/model.cpp")
 
 if(MSVC) # If using the VS compiler...
 
@@ -47,4 +53,4 @@ endif()
 
 target_include_directories(Engine PUBLIC "${PROJECT_SOURCE_DIR}/includes")
 
-target_link_libraries(Engine PRIVATE glm glfw glad stb_image imgui)
+target_link_libraries(Engine PRIVATE glm glfw glad stb_image imgui assimp)
